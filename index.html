@@ -12,6 +12,26 @@
 <ul id="receitas-lista"></ul>
 
 <script>
+
+    function iniciarServidor() {
+            // Use JavaScript para iniciar o servidor (esse código é um exemplo e pode não funcionar em todos os ambientes)
+            const { exec } = require('child_process');
+            const serverProcess = exec('node server.js');
+
+            // Lidar com a saída do processo (opcional)
+            serverProcess.stdout.on('data', (data) => {
+                console.log(`Saída do servidor: ${data}`);
+            });
+
+            serverProcess.stderr.on('data', (data) => {
+                console.error(`Erro do servidor: ${data}`);
+            });
+
+            serverProcess.on('close', (code) => {
+                console.log(`Servidor encerrado com código ${code}`);
+            });
+    }
+
     const listaReceitas = document.getElementById('receitas-lista');
 
     async function carregarReceitas() {
