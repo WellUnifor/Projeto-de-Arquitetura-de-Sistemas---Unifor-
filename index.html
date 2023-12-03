@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consumidor de Receitas</title>
+</head>
+<body>
+
+<h1>Receitas Culinárias</h1>
+
+<ul id="receitas-lista"></ul>
+
+<script>
+    const listaReceitas = document.getElementById('receitas-lista');
+
+    async function carregarReceitas() {
+        const resposta = await fetch('http://localhost:3000/receitas');
+        const receitas = await resposta.json();
+
+        receitas.forEach(receita => {
+            const itemLista = document.createElement('li');
+            itemLista.textContent = `${receita.nome} - Calorias: ${receita.calorias}`;
+            listaReceitas.appendChild(itemLista);
+        });
+    }
+
+    async function adicionarReceita() {
+        const nome = prompt('Digite o nome da receita:');
+        const calorias = prompt('Digite as calorias da receita:');
+        const ingredientes = prompt('Digite os ingredientes (separados por vírgula):').split(',');
+
+        const novaReceita = { nome, calorias: parseInt(calorias), ingredientes };
+
+        const resposta = await fetch('http://localhost:3000/receitas', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(novaReceita)
+        });
+
+        if (resposta.ok) {
+            carregarReceitas();
+        } else {
+            console.error('Erro ao adicionar receita');
+        }
+    }
+
+    carregarReceitas();
+</script>
+
+</body>
+</html>
