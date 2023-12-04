@@ -1,6 +1,5 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const fetch = require('node-fetch');
 
 const router = express.Router();
 router.use(bodyParser.json());
@@ -8,7 +7,7 @@ router.use(bodyParser.json());
 let listaCompras = [];
 
 // Rota para obter a lista de compras
-router.get('/lista-compras', (req, res) => {
+router.get('/', (req, res) => {
   res.json(listaCompras);
 });
 

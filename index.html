@@ -35,15 +35,60 @@
     const listaReceitas = document.getElementById('receitas-lista');
 
     async function carregarReceitas() {
-        const resposta = await fetch('http://localhost:3000/receitas');
-        const receitas = await resposta.json();
+    const resposta = await fetch('http://localhost:3000/receitas');
+    const receitas = await resposta.json();
 
-        receitas.forEach(receita => {
-            const itemLista = document.createElement('li');
-            itemLista.textContent = `${receita.nome} - Calorias: ${receita.calorias}`;
-            listaReceitas.appendChild(itemLista);
-        });
+    receitas.forEach(async (receita) => {
+        const ingredientesFaltando = await verificarEstoque(receita.ingredientes);
+
+        const itemLista = document.createElement('li');
+        itemLista.textContent = `${receita.nome} - Calorias: ${receita.calorias}`;
+
+        if (ingredientesFaltando.length === 0) {
+            itemLista.textContent += ' (Ingredientes Disponíveis)';
+        } else {
+            itemLista.textContent += ` (Ingredientes Faltando: ${ingredientesFaltando.join(', ')})`;
+            adicionarListaCompras(ingredientesFaltando);
+        }
+
+        listaReceitas.appendChild(itemLista);
+    });
+}
+
+async function verificarEstoque(ingredientes) {
+    try {
+        const resposta = await fetch('http://localhost:3000/estoque');
+        const estoque = await resposta.json();
+
+        // Filtrar os ingredientes que estão ausentes no estoque
+        const ingredientesFaltando = ingredientes.filter(ingrediente => !estoque.some(item => item.nome === ingrediente));
+
+        return ingredientesFaltando;
+    } catch (error) {
+        console.error('Erro ao verificar o estoque:', error.message);
+        return [];
     }
+}
+
+async function adicionarListaCompras(ingredientes) {
+    try {
+        for (const ingrediente of ingredientes) {
+            const resposta = await fetch('http://localhost:3000/lista', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ingrediente }),
+            });
+
+            if (!resposta.ok) {
+                throw new Error(`Erro ao adicionar "${ingrediente}" à lista de compras`);
+            }
+        }
+    } catch (error) {
+        console.error(error.message);
+    }
+}
 
     async function adicionarReceita() {
         const nome = prompt('Digite o nome da receita:');
