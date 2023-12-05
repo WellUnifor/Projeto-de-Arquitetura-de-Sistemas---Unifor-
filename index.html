@@ -35,25 +35,66 @@
     const listaReceitas = document.getElementById('receitas-lista');
 
     async function carregarReceitas() {
-    const resposta = await fetch('http://localhost:3000/receitas');
-    const receitas = await resposta.json();
+    try {
+        const resposta = await fetch('http://localhost:3000/receitas');
+        const receitas = await resposta.json();
 
-    receitas.forEach(async (receita) => {
-        const ingredientesFaltando = await verificarEstoque(receita.ingredientes);
+        for (const receita of receitas) {
+            const ingredientesFaltando = await verificarEstoque(receita.ingredientes);
 
-        const itemLista = document.createElement('li');
-        itemLista.textContent = `${receita.nome} - Calorias: ${receita.calorias}`;
+            const itemLista = document.createElement('li');
+            itemLista.textContent = `${receita.nome} - Calorias: ${receita.calorias}`;
 
-        if (ingredientesFaltando.length === 0) {
-            itemLista.textContent += ' (Ingredientes Disponíveis)';
-        } else {
-            itemLista.textContent += ` (Ingredientes Faltando: ${ingredientesFaltando.join(', ')})`;
-            adicionarListaCompras(ingredientesFaltando);
+            if (ingredientesFaltando.length === 0) {
+                itemLista.textContent += ' (Ingredientes Disponíveis)';
+            } else {
+                itemLista.textContent += ` (Ingredientes Faltando: ${ingredientesFaltando.join(', ')})`;
+                adicionarListaCompras(ingredientesFaltando);
+            }
+
+            listaReceitas.appendChild(itemLista);
+
+            // Obter informações nutricionais
+            const nutricionais = await obterInformacoesNutricionais(receita.ingredientes);
+            itemLista.textContent += formatarInformacoesNutricionais(nutricionais)
         }
-
-        listaReceitas.appendChild(itemLista);
-    });
+    } catch (error) {
+        console.error('Erro ao carregar receitas:', error.message);
+    }
 }
+
+function formatarInformacoesNutricionais(nutricionais) {
+    
+    const calorias = nutricionais.calorias || 'N/A';
+    const proteinas = nutricionais.proteinas || 'N/A';
+    const carboidratos = nutricionais.carboidratos || 'N/A';
+    const gorduras = nutricionais.gorduras || 'N/A';
+
+    return ` - Calorias: ${calorias}, Proteínas: ${proteinas}, Carboidratos: ${carboidratos}, Gorduras: ${gorduras}`;
+}
+
+async function obterInformacoesNutricionais(ingredientes) {
+    try {
+        const resposta = await fetch('http://localhost:3000/informacoes/receitas', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ ingredientes })
+        });
+
+        if (resposta.ok) {
+            const informacoesNutricionais = await resposta.json();
+            console.log('Informações Nutricionais:', informacoesNutricionais);
+            return informacoesNutricionais;
+        } else {
+            throw new Error('Erro ao obter informações nutricionais da receita');
+        }
+    } catch (error) {
+        console.error(error.message);
+    }
+}
+
 
 async function verificarEstoque(ingredientes) {
     try {
@@ -105,11 +146,14 @@ async function adicionarListaCompras(ingredientes) {
             body: JSON.stringify(novaReceita)
         });
 
+        // Dentro da função adicionarReceita
         if (resposta.ok) {
             carregarReceitas();
+            obterInformacoesNutricionais(novaReceita.ingredientes);
         } else {
             console.error('Erro ao adicionar receita');
         }
+
     }
 
     carregarReceitas();
