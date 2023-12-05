@@ -5,7 +5,7 @@ let estoque = [
     { id: 1, nome: 'Maçã', quantidade: 10,validade:"2023-01-10" },
   ];
 
-  router.get('/validade-vencida', async (req, res) => {
+  router.get('/validade', async (req, res) => {
     try {
       const response = await fetch('http://localhost:3000/estoque');
       const estoque = await response.json();

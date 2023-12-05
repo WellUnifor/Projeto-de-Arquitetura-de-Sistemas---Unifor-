@@ -14,7 +14,7 @@ router.get('/', (req, res) => {
 // Atualiza a lista de compras com os itens vencidos do estoque
 router.get('/atualizar-itens-vencidos', async (req, res) => {
   try {
-    const estoqueResponse = await fetch('http://localhost:3000/estoque/validade-vencida');
+    const estoqueResponse = await fetch('http://localhost:3000/estoque/validade');
     const produtosVencidos = await estoqueResponse.json();
 
     // Adicionar itens vencidos à lista de compras
