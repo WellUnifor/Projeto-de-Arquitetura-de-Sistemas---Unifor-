@@ -5,14 +5,150 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consumidor de Receitas</title>
 </head>
+<style>
+    .delete-button {
+      background-color: #dc3545;
+      color: #fff;
+      border: none;
+      padding: 2.5px 5px;
+      margin-left: 10px;
+      cursor: pointer;
+      border-radius: 10px;
+    }
+  </style>
 <body>
 
 <h1>Receitas Culinárias</h1>
-
+<button onclick="adicionarReceita()">Adicionar Receita</button>
 <ul id="receitas-lista"></ul>
 
+<h1>Estoque</h1>
+<button onclick="adicionarItemAoEstoque()">Adicionar Item ao Estoque</button>
+<button onclick="verificarEExcluirItensVencidos()">Verificar e Excluir Itens Vencidos</button>
+<ul id="estoque-lista"></ul>
+<h1>Lista de compras</h1>
+<ul id="lista-compras"></ul>
 <script>
+     async function verificarEExcluirItensVencidos() {
+      try {
+        const response = await fetch('http://localhost:3000/estoque/validade');
+        const produtosVencidos = await response.json();
 
+        if (produtosVencidos.length > 0) {
+          console.log('Itens vencidos:', produtosVencidos);
+
+          // Adicione aqui lógica adicional, se necessário
+
+          alert('Itens vencidos foram verificados e excluídos.');
+        } else {
+          console.log('Nenhum item vencido encontrado.');
+          alert('Nenhum item vencido encontrado.');
+        }
+      } catch (error) {
+        console.error('Erro ao verificar e excluir itens vencidos:', error);
+        alert('Erro ao verificar e excluir itens vencidos. Verifique o console para mais detalhes.');
+      }
+    }
+
+async function carregarEstoque() {
+        const resposta = await fetch('http://localhost:3000/estoque');
+        const estoque = await resposta.json();
+
+        const listaEstoque = document.getElementById('estoque-lista');
+        listaEstoque.innerHTML = ''; // Limpa a lista antes de preenchê-la novamente
+
+        estoque.forEach(item => {
+            const listItem = document.createElement('li');
+            listItem.textContent = `${item.nome} - Quantidade: ${item.quantidade} - Validade: ${item.validade}`;
+            listaEstoque.appendChild(listItem);
+        });
+    }
+
+    // Inicializa o estoque ao carregar a página
+    carregarEstoque();
+
+async function adicionarItemAoEstoque() {
+        const nome = prompt('Digite o nome do item:');
+        const quantidade = parseInt(prompt('Digite a quantidade do item:'));
+        const validade = prompt('Digite a data de validade do item (AAAA-MM-DD):');
+
+        // Verifica se o usuário pressionou Cancelar em algum prompt
+        if (nome === null || isNaN(quantidade) || validade === null) {
+            console.error('Um ou mais campos estão nulos ou inválidos. O item não foi adicionado ao estoque.');
+            return;
+        }
+
+        const novoItem = { nome, quantidade, validade };
+
+        const resposta = await fetch('http://localhost:3000/estoque', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(novoItem)
+        });
+
+        // Dentro da função adicionarItemAoEstoque
+        if (resposta.ok) {
+            console.log('Item adicionado com sucesso ao estoque.');
+        } else {
+            console.error('Erro ao adicionar item ao estoque');
+        }
+    }
+
+    function carregarListaCompras() {
+        fetch('http://localhost:3000/lista')
+          .then(response => response.json())
+          .then(data => {
+            // Limpa a lista antes de preenchê-la novamente
+            const listaCompras = document.getElementById('lista-compras');
+            listaCompras.innerHTML = '';
+
+            // Preenche a lista com os itens recebidos
+            data.forEach(item => {
+              const listItem = document.createElement('li');
+              listItem.textContent = item.nome;
+
+              // Adiciona um botão de delete para cada item
+              const deleteButton = document.createElement('button');
+              deleteButton.textContent = 'Delete';
+              deleteButton.className = 'delete-button';
+
+              // Adiciona um evento de clique para o botão de delete
+              deleteButton.addEventListener('click', () => {
+                // Chama a função para deletar o item da lista
+                deletarItemLista(item.id);
+              });
+
+              // Adiciona o botão de delete ao item da lista
+              listItem.appendChild(deleteButton);
+
+              listaCompras.appendChild(listItem);
+            });
+          })
+          .catch(error => {
+            console.error('Erro ao realizar fetch:', error);
+          });
+      }
+
+      // Função para deletar um item da lista
+      function deletarItemLista(itemId) {
+        fetch(`http://localhost:3000/lista/${itemId}`, {
+          method: 'DELETE',
+        })
+          .then(response => {
+            if (response.ok) {
+              // Se a exclusão for bem-sucedida, recarrega a lista
+              carregarListaCompras();
+            } else {
+              console.error('Erro ao excluir o item da lista.');
+            }
+          })
+          .catch(error => {
+            console.error('Erro ao realizar delete:', error);
+          });
+      }
+      carregarListaCompras() 
     function iniciarServidor() {
             // Use JavaScript para iniciar o servidor (esse código é um exemplo e pode não funcionar em todos os ambientes)
             const { exec } = require('child_process');
@@ -119,7 +255,7 @@ async function adicionarListaCompras(ingredientes) {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ ingrediente }),
+                body: JSON.stringify({ nome:ingrediente }),
             });
 
             if (!resposta.ok) {
@@ -137,7 +273,7 @@ async function adicionarListaCompras(ingredientes) {
         const ingredientes = prompt('Digite os ingredientes (separados por vírgula):').split(',');
 
         const novaReceita = { nome, calorias: parseInt(calorias), ingredientes };
-
+        if (nome == "" || calorias == '' || ingredientesInput || "") return alert("nao pode ser nulo")
         const resposta = await fetch('http://localhost:3000/receitas', {
             method: 'POST',
             headers: {

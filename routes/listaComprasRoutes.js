@@ -4,7 +4,9 @@ const bodyParser = require('body-parser');
 const router = express.Router();
 router.use(bodyParser.json());
 
-let listaCompras = [];
+let listaCompras = [
+  { id: 1, nome: 'Banana'},
+];
 
 // Rota para obter a lista de compras
 router.get('/', (req, res) => {
@@ -29,10 +31,20 @@ router.get('/atualizar-itens-vencidos', async (req, res) => {
 
 // Rota para adicionar um item à lista de compras
 router.post('/', (req, res) => {
-    const novoItem = req.body;
-    listaCompras.push(novoItem);
-    res.status(201).json(novoItem);
-  });
+  const novoItem = req.body;
+
+  // Verifica se já existe um item com o mesmo nome na lista
+  const itemExistente = listaCompras.find(item => item.nome === novoItem.nome);
+
+  if (itemExistente) {
+      return res.status(400).json({ error: 'Já existe um item com o mesmo nome na lista.' });
+  }
+
+  novoItem.id = listaCompras.length + 1;
+  listaCompras.push(novoItem);
+  res.status(201).json(novoItem);
+});
+
   
   // Rota para remover um item da lista de compras
   router.delete('/:id', (req, res) => {
