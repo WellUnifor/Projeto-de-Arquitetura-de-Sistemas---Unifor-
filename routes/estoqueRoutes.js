@@ -22,6 +22,14 @@ let estoque = [
 
       await Promise.all(
         produtosValidadeVencida.map(async vencido => {
+          await fetch('http://localhost:3000/lista', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ nome: vencido.nome }), // Ajuste conforme a estrutura real do seu objeto
+                    });
+
           try {
             const response = await fetch(`http://localhost:3000/estoque/${vencido.id}`, {
               method: 'DELETE',
@@ -62,6 +70,7 @@ let estoque = [
   // Rota para adicionar um novo item ao estoque
   router.post('/', (req, res) => {
     const novoItem = req.body;
+    novoItem.id = estoque.length + 1;
     estoque.push(novoItem);
     res.status(201).json(novoItem);
   });

@@ -34,7 +34,7 @@ router.post('/', (req, res) => {
   const novoItem = req.body;
 
   // Verifica se já existe um item com o mesmo nome na lista
-  const itemExistente = listaCompras.find(item => item.nome === novoItem.nome);
+  const itemExistente = listaCompras.find(item => item.nome.toLowerCase() === novoItem.nome.toLowerCase());
 
   if (itemExistente) {
       return res.status(400).json({ error: 'Já existe um item com o mesmo nome na lista.' });
